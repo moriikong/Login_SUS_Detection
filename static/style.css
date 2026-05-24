@@ -216,6 +216,12 @@ button:hover {
     color: #0f172a;
 }
 
+.secondary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #cbd5e1;
+}
+
 .secondary-button:hover {
     background: #cbd5e1;
 }

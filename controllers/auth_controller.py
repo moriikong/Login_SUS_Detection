@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask import request, jsonify
+from numpy import record
 
 from models.db import db
 from models.user_model import User
@@ -544,6 +545,19 @@ def resend_otp():
             "message": "OTP verification session is blocked. Please login again.",
             "record": record.to_dict()
         }), 423
+    
+    # Do not allow resend while current OTP is still valid
+    if record.otp_expires_at and datetime.now(MALAYSIA_TZ).replace(tzinfo=None) < record.otp_expires_at:
+        remaining_seconds = int(
+            (record.otp_expires_at - datetime.now(MALAYSIA_TZ).replace(tzinfo=None)).total_seconds()
+        )
+
+        return jsonify({
+            "message": f"Current OTP is still valid. Please wait {remaining_seconds} seconds before requesting a new OTP.",
+            "otp_still_valid": True,
+            "remaining_seconds": remaining_seconds,
+            "record": record.to_dict()
+        }), 429
 
     if record.otp_resend_count >= MAX_OTP_RESENDS:
         record.otp_blocked = True

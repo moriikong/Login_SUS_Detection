@@ -324,6 +324,13 @@ async function verifyOtp(event) {
 // ===================================================
 
 async function resendOtp() {
+    const resendOtpBtn = document.getElementById("resendOtpBtn");
+
+    if (resendOtpBtn && resendOtpBtn.disabled) {
+        showFlash("Please wait until the current OTP expires before requesting a new one.", "error");
+        return;
+    }
+
     const loginRecordId = localStorage.getItem("login_record_id");
 
     if (!loginRecordId) {
@@ -343,6 +350,16 @@ async function resendOtp() {
         });
 
         const data = await response.json();
+
+        if (response.status === 429) {
+            showFlash(data.message || "Current OTP is still valid. Please wait until it expires.", "error");
+
+            if (data.remaining_seconds !== undefined) {
+                restartOtpCountdown(data.remaining_seconds);
+            }
+
+            return;
+        }
 
         if (response.status === 423) {
             localStorage.setItem("lastLoginResponse", JSON.stringify(data));
@@ -419,11 +436,17 @@ function startOtpCountdown(seconds = 60) {
 function restartOtpCountdown(seconds = 60) {
     let otpTimeLeft = seconds;
     const otpCountdown = document.getElementById("otpCountdown");
+    const resendOtpBtn = document.getElementById("resendOtpBtn");
 
     if (!otpCountdown) return;
 
     if (otpTimer) {
         clearInterval(otpTimer);
+    }
+
+    if (resendOtpBtn) {
+        resendOtpBtn.disabled = true;
+        resendOtpBtn.textContent = `Resend OTP after ${otpTimeLeft}s`;
     }
 
     otpCountdown.textContent = otpTimeLeft;
@@ -435,14 +458,25 @@ function restartOtpCountdown(seconds = 60) {
             clearInterval(otpTimer);
             otpCountdown.textContent = "0";
 
-            showFlash("OTP expired. Click Resend OTP to continue.", "error");
+            showFlash("OTP expired. You may request a new OTP.", "error");
 
             const info = document.getElementById("otpAttemptInfo");
             if (info) {
                 info.textContent = "OTP expired. Click Resend OTP to generate a new OTP.";
             }
+
+            if (resendOtpBtn) {
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.textContent = "Resend OTP";
+            }
+
         } else {
             otpCountdown.textContent = otpTimeLeft;
+
+            if (resendOtpBtn) {
+                resendOtpBtn.disabled = true;
+                resendOtpBtn.textContent = `Resend OTP after ${otpTimeLeft}s`;
+            }
         }
     }, 1000);
 }
