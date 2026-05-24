@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Secure Login{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="security-note">
+    The backend automatically detects timestamp, IP address, browser,
+    operating system, device type, and approximate location.
+</div>
+
+<form id="loginForm" class="auth-form">
+    <label for="username">Username</label>
+    <input name="username" id="username" placeholder="Enter your username" required>
+
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" placeholder="Enter your password" required>
+
+    <input type="submit" value="Login">
+</form>
+
+<div id="riskResultBox" class="status-card" style="display:none; margin-top:24px;">
+    <div class="status-icon">🛡️</div>
+    <h2>Risk Detection Result</h2>
+    <p id="riskPrediction"></p>
+    <p id="riskLevel"></p>
+    <p id="riskProbability"></p>
+    <p id="recommendedAction"></p>
+</div>
+
+{% endblock %}

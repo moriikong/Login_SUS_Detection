@@ -8,6 +8,7 @@ from flask import current_app
 model = None
 feature_info = None
 
+
 def load_model():
     global model, feature_info
 
@@ -28,8 +29,10 @@ def convert_bool(value):
 
     if value in ["true", "yes", "1", "success", "successful"]:
         return 1
-    elif value in ["false", "no", "0", "fail", "failed"]:
+
+    if value in ["false", "no", "0", "fail", "failed"]:
         return 0
+
     return 0
 
 
@@ -75,9 +78,9 @@ def predict_login_risk(login_attempt):
         "os_type": str(login_attempt.get("os_type", "unknown")).strip().lower(),
         "browser": str(login_attempt.get("browser", "unknown")).strip().lower(),
         "location": str(login_attempt.get("location", "unknown")).strip().lower(),
-        "login_method": str(login_attempt.get("login_method", "unknown")).strip().lower(),
-        "auth_type": str(login_attempt.get("auth_type", "unknown")).strip().lower(),
-        "account_status": str(login_attempt.get("account_status", "unknown")).strip().lower()
+        "login_method": str(login_attempt.get("login_method", "password")).strip().lower(),
+        "auth_type": str(login_attempt.get("auth_type", "password")).strip().lower(),
+        "account_status": str(login_attempt.get("account_status", "active")).strip().lower()
     }
 
     all_expected_cols = numeric_cols + categorical_cols
@@ -120,7 +123,7 @@ def predict_login_risk(login_attempt):
     failed_attempts = int(login_attempt.get("failed_attempts", 0))
     success = convert_bool(login_attempt.get("success"))
     mfa_enabled = convert_bool(login_attempt.get("mfa_enabled"))
-    account_status = str(login_attempt.get("account_status", "unknown")).strip().lower()
+    account_status = str(login_attempt.get("account_status", "active")).strip().lower()
 
     if success == 0 and failed_attempts >= 5:
         risk_level = "High"

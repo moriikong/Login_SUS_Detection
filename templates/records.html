@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Login Records{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="security-note">
+    This page displays all login attempts, including password authentication result,
+    OTP attempts, AI/ML prediction, risk level, and recommended mitigation action.
+</div>
+
+<div style="overflow-x:auto;">
+    <table class="records-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Password Auth</th>
+                <th>Password Failed Attempts</th>
+                <th>OTP Attempts</th>
+                <th>OTP Blocked</th>
+                <th>ML Prediction</th>
+                <th>Risk Probability</th>
+                <th>Risk Level</th>
+                <th>Recommended Action</th>
+                <th>Browser</th>
+                <th>OS</th>
+                <th>IP Address</th>
+                <th>Login Time</th>
+            </tr>
+        </thead>
+
+        <tbody id="recordsTableBody">
+            <tr>
+                <td colspan="14" style="text-align:center;">
+                    Loading records...
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align:center; margin-top:24px;">
+    <button onclick="loadRecords()">Refresh Records</button>
+</div>
+
+{% endblock %}

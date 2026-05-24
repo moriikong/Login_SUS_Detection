@@ -6,6 +6,11 @@ from models.user_model import User
 def create_user():
     data = request.get_json()
 
+    if not data:
+        return jsonify({
+            "message": "No input data provided"
+        }), 400
+
     username = data.get("username")
     password = data.get("password")
 

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Secure MFA System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <h1>Secure MFA System</h1>
+
+        <ul>
+            <li><a href="/register-page">Register</a></li>
+            <li><a href="/login-page">Login</a></li>
+            <li><a href="/records-page">Records</a></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <header>
+            {% block header %}{% endblock %}
+        </header>
+
+        <div id="flashBox" class="flash" style="display:none;"></div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

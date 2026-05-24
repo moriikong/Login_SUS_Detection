@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Create Account{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="security-note">
+    <strong>Username Requirements:</strong>
+    <ul class="password-rules">
+        <li>4 to 20 characters</li>
+        <li>Letters, numbers and underscores only</li>
+    </ul>
+
+    <strong>Password Requirements:</strong>
+    <ul class="password-rules">
+        <li>At least 8 characters</li>
+        <li>1 uppercase letter</li>
+        <li>1 lowercase letter</li>
+        <li>1 number</li>
+        <li>1 special character</li>
+    </ul>
+</div>
+
+<form id="registerForm" class="auth-form">
+    <label for="username">Username</label>
+    <input
+        name="username"
+        id="username"
+        placeholder="Choose a username"
+        minlength="4"
+        maxlength="20"
+        pattern="[A-Za-z0-9_]+"
+        title="Username can only contain letters, numbers and underscores."
+        required
+    >
+
+    <label for="password">Password</label>
+    <input
+        type="password"
+        name="password"
+        id="password"
+        placeholder="Create a strong password"
+        pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$"
+        title="Password must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+        required
+    >
+
+    <label for="confirm_password">Confirm Password</label>
+    <input
+        type="password"
+        name="confirm_password"
+        id="confirm_password"
+        placeholder="Re-enter your password"
+        required
+    >
+
+    <input type="submit" value="Create Account">
+</form>
+
+{% endblock %}

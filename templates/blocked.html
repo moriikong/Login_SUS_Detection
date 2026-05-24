@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Access Blocked{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="status-card danger-card">
+    <div class="status-icon">⚠️</div>
+    <h2>Suspicious Login Activity Detected</h2>
+
+    <p id="blockedMessage">
+      Access has been blocked.
+    </p>
+
+    <div class="countdown-box" id="countdownBox" style="display:none;">
+      Try again in <span id="countdown">60</span> seconds
+    </div>
+
+    <a class="secondary-link" href="/login-page">Return to Login</a>
+</div>
+
+{% endblock %}

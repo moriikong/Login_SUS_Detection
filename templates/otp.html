@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}OTP Verification{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="status-card">
+    <div class="status-icon">🔐</div>
+    <h2>Multi-Factor Authentication</h2>
+
+    <p>
+      A one-time password has been generated for this login attempt.
+    </p>
+
+    <div class="flash" id="demoOtpBox"></div>
+
+    <div class="otp-timer">
+      OTP session expires in <span id="otpCountdown">60</span> seconds
+    </div>
+
+    <form id="otpForm" class="otp-form">
+      <label for="otp">Enter 6-digit OTP</label>
+
+      <input
+        type="text"
+        name="otp"
+        id="otp"
+        maxlength="6"
+        pattern="[0-9]{6}"
+        placeholder="000000"
+        required
+      >
+
+      <input type="submit" value="Verify OTP">
+    </form>
+
+    <a class="secondary-link" href="/login-page">Return to Login</a>
+</div>
+
+
+{% endblock %}
