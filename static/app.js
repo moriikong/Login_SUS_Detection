@@ -89,6 +89,53 @@ async function registerUser(event) {
     }
 }
 
+function showLoginDelayMessage(seconds, finalMessage) {
+    const loginBtn = document.getElementById("loginBtn");
+    const delayBox = document.getElementById("loginDelayBox");
+    const delayCountdown = document.getElementById("loginDelayCountdown");
+
+    let timeLeft = Number(seconds) || 3;
+
+    if (delayBox) {
+        delayBox.style.display = "block";
+    }
+
+    if (delayCountdown) {
+        delayCountdown.textContent = timeLeft;
+    }
+
+    if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.value = `Please wait ${timeLeft}s`;
+    }
+
+    const timer = setInterval(() => {
+        timeLeft--;
+
+        if (delayCountdown) {
+            delayCountdown.textContent = timeLeft;
+        }
+
+        if (loginBtn) {
+            loginBtn.value = `Please wait ${timeLeft}s`;
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+
+            if (delayBox) {
+                delayBox.style.display = "none";
+            }
+
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.value = "Login";
+            }
+
+            showFlash(finalMessage, "error");
+        }
+    }, 1000);
+}
 
 // ===================================================
 // 3. Login User
@@ -96,6 +143,19 @@ async function registerUser(event) {
 
 async function loginUser(event) {
     event.preventDefault();
+
+    const loginBtn = document.getElementById("loginBtn");
+    const delayBox = document.getElementById("loginDelayBox");
+    const delayCountdown = document.getElementById("loginDelayCountdown");
+
+    if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.value = "Checking...";
+    }
+
+    if (delayBox) {
+        delayBox.style.display = "none";
+    }
 
     const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value;
@@ -145,7 +205,18 @@ async function loginUser(event) {
         // Wrong password but account not blocked yet
         if (response.status === 401) {
             const message = data.message || "Login failed. Incorrect username or password.";
-            showFlash(message, "error");
+
+            if (data.delay_applied === true && data.delay_seconds) {
+                showLoginDelayMessage(data.delay_seconds, message);
+            } else {
+                showFlash(message, "error");
+
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.value = "Login";
+                }
+            }
+
             return;
         }
 
@@ -174,6 +245,11 @@ async function loginUser(event) {
     } catch (error) {
         console.error(error);
         showFlash("Cannot connect to backend server.", "error");
+
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.value = "Login";
+        }
     }
 }
 

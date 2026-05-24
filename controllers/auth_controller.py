@@ -2,7 +2,6 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask import request, jsonify
-from numpy import record
 
 from models.db import db
 from models.user_model import User
@@ -29,6 +28,15 @@ OTP_ACCOUNT_BLOCK_DURATION = 60
 
 # Timezone
 MALAYSIA_TZ = ZoneInfo("Asia/Kuala_Lumpur")
+
+
+def get_malaysia_time():
+    """
+    Return Malaysia local time without timezone info.
+    SQLite stores naive datetime better, so tzinfo is removed.
+    """
+    return datetime.now(MALAYSIA_TZ).replace(tzinfo=None)
+
 
 def build_login_attempt(user, password_correct, timestamp, ip_address, device_info, location):
     return {
@@ -66,7 +74,7 @@ def create_login_record(
     otp_expires_at = None
 
     if otp_code:
-        otp_expires_at = datetime.now(MALAYSIA_TZ) + timedelta(seconds=OTP_EXPIRY_SECONDS)
+        otp_expires_at = get_malaysia_time() + timedelta(seconds=OTP_EXPIRY_SECONDS)
 
     record = LoginRecord(
         username=username,
@@ -153,7 +161,7 @@ def login():
             "account_status": user.account_status
         }), 403
 
-    timestamp = datetime.now(MALAYSIA_TZ)
+    timestamp = get_malaysia_time()
     ip_address = get_client_ip()
     device_info = get_device_info()
     location = "unknown"
@@ -190,10 +198,20 @@ def login():
             risk_result["prediction"] = "Password Guessing Risk Detected"
             risk_result["risk_probability"] = max(risk_result["risk_probability"], 0.6)
             risk_result["risk_level"] = "Medium"
+
+            delay_seconds = 3
+
             risk_result["recommended_action"] = (
-                "Repeated failed password attempts detected. "
-                "Apply login delay and require correct password before MFA."
+                f"Repeated failed password attempts detected. "
+                f"A {delay_seconds}-second login delay was applied before returning the response."
             )
+
+            print(f"[LOGIN DELAY] Failed attempts: {user.failed_attempts}")
+            print(f"[LOGIN DELAY] Backend delay started for {delay_seconds} seconds...")
+
+            time.sleep(delay_seconds)
+
+            print("[LOGIN DELAY] Backend delay ended.")
 
         if user.failed_attempts >= PASSWORD_BLOCK_THRESHOLD:
             user.blocked_until = current_time + PASSWORD_BLOCK_DURATION
@@ -236,6 +254,9 @@ def login():
                 "risk_result": risk_result
             }), 423
 
+        delay_applied = user.failed_attempts >= 3 and user.failed_attempts < PASSWORD_BLOCK_THRESHOLD
+        delay_seconds = 3 if delay_applied else 0
+
         return jsonify({
             "message": (
                 f"Login failed. Incorrect username or password. "
@@ -246,6 +267,8 @@ def login():
             "login_record_id": record.id,
             "failed_attempts": user.failed_attempts,
             "remaining_attempts_before_block": PASSWORD_BLOCK_THRESHOLD - user.failed_attempts,
+            "delay_applied": delay_applied,
+            "delay_seconds": delay_seconds,
             "auto_detected": {
                 "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 "ip_address": ip_address,
@@ -363,7 +386,7 @@ def verify_login_otp():
     # ===================================================
     # Server-side OTP expiry check
     # ===================================================
-    if record.otp_expires_at and datetime.now(MALAYSIA_TZ).replace(tzinfo=None) > record.otp_expires_at:
+    if record.otp_expires_at and get_malaysia_time() > record.otp_expires_at:
         record.otp_code = None
         record.recommended_action = "OTP expired. Please request a new OTP."
         db.session.commit()
@@ -393,14 +416,7 @@ def verify_login_otp():
             "record": record.to_dict()
         }), 200
 
-        db.session.commit()
-
-        return jsonify({
-            "message": "OTP verified. Login successful.",
-            "record": record.to_dict()
-        }), 200
-
-   # ===================================================
+    # ===================================================
     # Wrong OTP
     # ===================================================
     record.otp_attempts += 1
@@ -439,7 +455,6 @@ def verify_login_otp():
             "remaining_seconds": OTP_ACCOUNT_BLOCK_DURATION,
             "record": record.to_dict()
         }), 423
-
 
     # Wrong OTP 3 times in current session -> block current OTP session
     if record.otp_attempts >= MAX_OTP_ATTEMPTS:
@@ -492,12 +507,11 @@ def verify_login_otp():
             "record": record.to_dict()
         }), 423
 
-
     # Wrong OTP but retry still allowed
     # Auto-refresh OTP after each wrong OTP
     new_otp = generate_otp()
     record.otp_code = new_otp
-    record.otp_expires_at = datetime.now(MALAYSIA_TZ) + timedelta(seconds=OTP_EXPIRY_SECONDS)
+    record.otp_expires_at = get_malaysia_time() + timedelta(seconds=OTP_EXPIRY_SECONDS)
 
     remaining_attempts = MAX_OTP_ATTEMPTS - record.otp_attempts
     db.session.commit()
@@ -545,11 +559,11 @@ def resend_otp():
             "message": "OTP verification session is blocked. Please login again.",
             "record": record.to_dict()
         }), 423
-    
+
     # Do not allow resend while current OTP is still valid
-    if record.otp_expires_at and datetime.now(MALAYSIA_TZ).replace(tzinfo=None) < record.otp_expires_at:
+    if record.otp_expires_at and get_malaysia_time() < record.otp_expires_at:
         remaining_seconds = int(
-            (record.otp_expires_at - datetime.now(MALAYSIA_TZ).replace(tzinfo=None)).total_seconds()
+            (record.otp_expires_at - get_malaysia_time()).total_seconds()
         )
 
         return jsonify({
@@ -602,7 +616,7 @@ def resend_otp():
 
     new_otp = generate_otp()
     record.otp_code = new_otp
-    record.otp_expires_at = datetime.now(MALAYSIA_TZ) + timedelta(seconds=OTP_EXPIRY_SECONDS)
+    record.otp_expires_at = get_malaysia_time() + timedelta(seconds=OTP_EXPIRY_SECONDS)
     record.otp_resend_count += 1
 
     db.session.commit()
